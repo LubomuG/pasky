@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Паски Великодня</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:100,200,300,regular,500,600,700,800,900,100italic,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic" rel="stylesheet" />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Паска<span>Великодня</span></div>
+            <div class="nav-links">
+                <a href="#" class="nav-link active" data-page="home" data-key="navHome">Замовити паску</a>
+                <a href="#" class="nav-link" data-page="constructor" data-key="navConstructor">Конструктор</a>
+                <a href="#" class="nav-link" data-page="roulette" data-key="navRoulette">Рулетка</a>
+            </div>
+            <div class="nav-right">
+                <div class="language-selector">
+                    <button class="lang-btn" data-lang="uk">УКР</button>
+                    <button class="lang-btn" data-lang="en">ENG</button>
+                    <button class="lang-btn" data-lang="pl">POL</button>
+                    <button class="lang-btn" data-lang="de">DEU</button>
+                </div>
+                <div class="cart-icon" id="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HOME -->
+    <section id="home-page" class="page active">
+        <div class="hero"></div>
+
+        <div class="container">
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Пошук пасок...">
+                <i class="fas fa-search"></i>
+            </div>
+
+            <div class="pasky-grid" id="pasky-grid"></div>
+
+            <div class="random-card" id="random-card">
+                <i class="fas fa-question-circle"></i>
+                <h3 data-key="randomTitle">Випадкова паска</h3>
+                <button class="btn-random" id="btn-random" data-key="randomBtn">Обрати за мене</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONSTRUCTOR -->
+    <section id="constructor-page" class="page">
+        <div class="constructor-container">
+            <div class="constructor-left">
+                <h2 data-key="constructorTitle">Конструктор паски</h2>
+                
+                <div class="section">
+                    <h3 data-key="toppingTitle">Топінг</h3>
+                    <div class="options" id="topping-options"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 data-key="additivesTitle">Додатки</h3>
+                    <div class="options" id="additives-options"></div>
+                </div>
+                
+                <div class="section">
+                    <h3 data-key="sizeTitle">Розмір</h3>
+                    <div class="size-options" id="size-options"></div>
+                </div>
+
+                <div class="total-price"><span data-key="price">Ціна</span>: <span id="constructor-price">450</span> грн</div>
+                <button class="btn-primary" id="add-to-cart-constructor" data-key="addToCart">Додати в кошик</button>
+            </div>
+            
+            <div class="constructor-right">
+                <img src="./img/paska.png" id="constructor-paska-img" alt="Паска">
+            </div>
+        </div>
+    </section>
+
+    <!-- ROULETTE -->
+    <section id="roulette-page" class="page">
+        <div class="roulette-container">
+            <h2 data-key="rouletteTitle">Великодня Рулетка</h2>
+            <div class="wheel-wrapper">
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                <div class="pointer"></div>
+            </div>
+            <button class="btn-spin" id="btn-spin" data-key="spinBtn">Крутити</button>
+            <div id="roulette-result"></div>
+        </div>
+    </section>
+
+    <!-- CART MODAL -->
+    <div class="modal" id="cart-modal">
+        <div class="modal-content">
+            <span class="close" id="close-cart">×</span>
+            <h2 data-key="cartTitle">Кошик</h2>
+            <div id="cart-items"></div>
+            <div class="cart-total"><span data-key="total">Разом</span>: <span id="cart-total-price">0</span> грн</div>
+            <button class="btn-primary" id="checkout-btn" data-key="checkout">Оформити замовлення</button>
+        </div>
+    </div>
+
+    <!-- PRODUCT MODAL -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <span class="close" id="close-product">×</span>
+            <img id="modal-image" src="" alt="">
+            <h2 id="modal-name"></h2>
+            <p id="modal-description"></p>
+            <div class="modal-price" id="modal-price"></div>
+            <button class="btn-primary" id="add-to-cart-modal" data-key="addToCart">Додати в кошик</button>
+        </div>
+    </div>
+
+    <!-- CHECKOUT MODAL -->
+    <div class="modal" id="checkout-modal">
+        <div class="modal-content">
+            <span class="close" id="close-checkout">×</span>
+            <h2 data-key="checkoutTitle">Оформлення замовлення</h2>
+            <input type="text" id="card-number" placeholder="Номер картки" maxlength="16">
+            
+            <!-- CAPTCHA SECTION -->
+            <div class="captcha-container" id="captcha-container">
+                <div class="captcha-box">
+                    <div class="captcha-code" id="captcha-code"></div>
+                    <button type="button" class="captcha-refresh" id="captcha-refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <input type="text" id="captcha-input" placeholder="Введіть код з картинки" maxlength="6">
+                <div class="captcha-error" id="captcha-error"></div>
+            </div>
+            
+            <button class="btn-primary" id="pay-btn" data-key="payBtn">Оплатити</button>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <span class="close" id="close-success">×</span>
+            <i class="fas fa-check-circle" style="font-size: 60px; color: #4caf50; margin-bottom: 20px;"></i>
+            <h2 data-key="successTitle">Замовлення успішне!</h2>
+            <p data-key="successMsg">Дякуємо за покупку. Ваша паска скоро буде готова!</p>
+            <button class="btn-primary" id="close-success-btn" data-key="closeBtn">Закрити</button>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="custom-alert" class="custom-alert">
+        <div class="custom-alert-content">
+            <i class="fas"></i>
+            <span id="alert-message"></span>
+        </div>
+    </div>
+
+    <script src="./main.js"></script>
+</body>
+</html>
