@@ -283,7 +283,8 @@ $(document).ready(function() {
             _id: 'custom-' + Date.now(),
             name: getTranslation('customCake'),
             price: price,
-            description: `${currentSize ? currentSize.name : ''}${currentTopping ? ', ' + currentTopping.name : ''}${currentAdditives.length ? ', ' + currentAdditives.map(a => a.name).join(', ') : ''}`
+            description: `${currentSize ? getLocalizedNameSimple(currentSize, 'name') : ''}${currentTopping ? ', ' + getLocalizedNameSimple(currentTopping, 'name') : ''}${currentAdditives.length ? ', ' + currentAdditives.map(a => getLocalizedNameSimple(a, 'name')).join(', ') : ''}`,
+            image: 'https://cdn-icons-png.flaticon.com/512/2975/2975360.png'
         };
         addToCart(customPasca);
     });
@@ -309,13 +310,37 @@ function getTranslation(key) {
     return translations[currentLang][key] || translations.uk[key] || key;
 }
 
+// Helper for simple objects like toppings, sizes, additives
+function getLocalizedNameSimple(item, field) {
+    if (field === 'name') {
+        return item[`name${currentLang.charAt(0).toUpperCase() + currentLang.slice(1)}`] || item.name;
+    }
+    return item[field];
+}
+
 async function loadPasky() {
+    // Check cache first
+    const cached = localStorage.getItem('cached_pasky');
+    const cacheTime = localStorage.getItem('cached_pasky_time');
+    const now = Date.now();
+    
+    if (cached && cacheTime && (now - parseInt(cacheTime)) < 3600000) { // 1 hour cache
+        pasky = JSON.parse(cached);
+        renderPasky(pasky);
+        return;
+    }
+    
     try {
         const res = await fetch('https://easter-cake.onrender.com/api/pasky');
+        if (!res.ok) throw new Error('Network response was not ok');
         pasky = await res.json();
+        // Cache the data
+        localStorage.setItem('cached_pasky', JSON.stringify(pasky));
+        localStorage.setItem('cached_pasky_time', Date.now().toString());
         renderPasky(pasky);
     } catch (err) {
-        console.error(err);
+        console.error('API Error:', err);
+        // Fallback data if API fails
         pasky = [
             { _id: '1', name: 'Класична паска', nameEn: 'Classic Easter Cake', namePl: 'Klasyczna babka', nameDe: 'Klassischer Osterkuchen', description: 'Традиційна великодня паска', descriptionEn: 'Traditional Easter cake', descriptionPl: 'Tradycyjna babka wielkanocna', descriptionDe: 'Traditioneller Osterkuchen', price: 350, image: 'https://cdn-icons-png.flaticon.com/512/2975/2975360.png' },
             { _id: '2', name: 'Шоколадна паска', nameEn: 'Chocolate Cake', namePl: 'Babka czekoladowa', nameDe: 'Schokoladenkuchen', description: 'З шоколадною глазур\'ю', descriptionEn: 'With chocolate glaze', descriptionPl: 'Z polewą czekoladową', descriptionDe: 'Mit Schokoladenglasur', price: 420, image: 'https://cdn-icons-png.flaticon.com/512/2975/2975360.png' },
@@ -329,10 +354,15 @@ function renderPasky(data) {
     const grid = $('#pasky-grid');
     grid.empty();
 
+    if (!data || data.length === 0) {
+        grid.html('<div style="text-align: center; grid-column: 1/-1; padding: 50px;"><p>😢 Паски не знайдено</p></div>');
+        return;
+    }
+
     data.forEach(p => {
         const card = `
             <div class="paska-card" data-id="${p._id}">
-                <img src="${p.image}" alt="${getLocalizedName(p, 'name')}">
+                <img src="${p.image}" alt="${getLocalizedName(p, 'name')}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2975/2975360.png'">
                 <div class="paska-card-info">
                     <h3>${getLocalizedName(p, 'name')}</h3>
                     <div class="price">${p.price} грн</div>
@@ -406,16 +436,20 @@ function showCart() {
     container.empty();
     let total = 0;
 
-    cart.forEach((item, i) => {
-        total += item.price;
-        container.append(`
-            <div class="cart-item">
-                <span>${getLocalizedName(item, 'name')}</span>
-                <span>${item.price} грн</span>
-                <button class="remove-item" data-index="${i}">×</button>
-            </div>
-        `);
-    });
+    if (cart.length === 0) {
+        container.html(`<div style="text-align: center; padding: 30px;">${getTranslation('cartEmpty')}</div>`);
+    } else {
+        cart.forEach((item, i) => {
+            total += item.price;
+            container.append(`
+                <div class="cart-item">
+                    <span>${getLocalizedName(item, 'name')}</span>
+                    <span>${item.price} грн</span>
+                    <button class="remove-item" data-index="${i}">×</button>
+                </div>
+            `);
+        });
+    }
 
     $('#cart-total-price').text(total);
     $('#cart-modal').fadeIn();
@@ -435,17 +469,17 @@ function renderConstructor() {
     $('#size-options').empty();
 
     toppings.forEach(t => {
-        const option = $(`<div class="option topping-option" data-price="${t.price}" data-name="${t.name}" data-name-en="${t.nameEn}" data-name-pl="${t.namePl}" data-name-de="${t.nameDe}">${getLocalizedName(t, 'name')}</div>`);
+        const option = $(`<div class="option topping-option" data-price="${t.price}" data-name="${t.name}" data-name-en="${t.nameEn}" data-name-pl="${t.namePl}" data-name-de="${t.nameDe}">${getLocalizedNameSimple(t, 'name')}</div>`);
         $('#topping-options').append(option);
     });
 
     additives.forEach(a => {
-        const option = $(`<div class="option additive-option" data-price="${a.price}" data-name="${a.name}" data-name-en="${a.nameEn}" data-name-pl="${a.namePl}" data-name-de="${a.nameDe}">${getLocalizedName(a, 'name')}</div>`);
+        const option = $(`<div class="option additive-option" data-price="${a.price}" data-name="${a.name}" data-name-en="${a.nameEn}" data-name-pl="${a.namePl}" data-name-de="${a.nameDe}">${getLocalizedNameSimple(a, 'name')}</div>`);
         $('#additives-options').append(option);
     });
 
     sizes.forEach(s => {
-        const option = $(`<div class="option size-option" data-price="${s.price}" data-name="${s.name}" data-name-en="${s.nameEn}" data-name-pl="${s.namePl}" data-name-de="${s.nameDe}">${getLocalizedName(s, 'name')}</div>`);
+        const option = $(`<div class="option size-option" data-price="${s.price}" data-name="${s.name}" data-name-en="${s.nameEn}" data-name-pl="${s.namePl}" data-name-de="${s.nameDe}">${getLocalizedNameSimple(s, 'name')}</div>`);
         $('#size-options').append(option);
     });
 
@@ -494,6 +528,12 @@ function renderConstructor() {
         }
         calculatePrice();
     });
+    
+    // Reset selections when language changes
+    currentTopping = null;
+    currentSize = null;
+    currentAdditives = [];
+    calculatePrice();
 }
 
 function calculatePrice() {
@@ -556,6 +596,7 @@ let isSpinning = false;
 $('#btn-spin').click(() => {
     if (isSpinning) return;
     isSpinning = true;
+    $('#roulette-result').html('');
     
     const canvas = $('#wheelCanvas');
     const extraSpins = 1440 + Math.random() * 720;
@@ -567,7 +608,9 @@ $('#btn-spin').click(() => {
         isSpinning = false;
         const angle = final % 360;
         const segmentAngle = 360 / prizes.length;
-        const winningIndex = Math.floor((360 - angle) / segmentAngle) % prizes.length;
+        let winningIndex = Math.floor((360 - angle) / segmentAngle) % prizes.length;
+        if (winningIndex < 0) winningIndex = 0;
+        
         const win = prizes[winningIndex];
         const winText = win[`name${currentLang.charAt(0).toUpperCase() + currentLang.slice(1)}`] || win.name;
         $('#roulette-result').html(`<h3 style="color:#4caf50">🎉 ${getTranslation('youWon')}: ${winText}!</h3>`);
@@ -576,7 +619,7 @@ $('#btn-spin').click(() => {
         setTimeout(() => {
             canvas.css('transform', 'rotate(0deg)');
         }, 500);
-    }, 4200);
+    }, 4000);
 });
 
 function showCustomAlert(message, type = 'success') {
